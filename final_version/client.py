@@ -1,8 +1,10 @@
 import socket
+import os
 import threading
 import tkinter
 import tkinter.scrolledtext
 from tkinter import simpledialog
+from tkinter import filedialog
 
 HOST = '127.0.0.1'
 PORT = 9090
@@ -151,9 +153,14 @@ class Chat:
         self.top_send_button.config(font=("Arial", 12))
         self.top_send_button.pack(padx=20, pady=5)
 
+        self.top_select_file_btn = tkinter.Button(self.top, text="Choose file", command=self.select_file)
+
         self.gui_done = True
 
         self.top.protocol("WM_DELETE_WINDOW", self.stop)
+
+    def select_file(self):
+        filename = filedialog.askopenfilename(initialdir=os.getcwd(), title="Select file", filetypes=(('file_text','*.txt'),('all files', '*.*')))
 
     def write_text_area(self, message):
         self.top_text_area.config(state='normal')
