@@ -5,28 +5,27 @@ import tkinter
 import tkinter.scrolledtext
 from tkinter import simpledialog
 from tkinter import filedialog
+from tkinter import *
+from functools import partial
+import time
+
+
+######################## CHAT ###############################
 
 HOST = '127.0.0.1'
 PORT = 9090
 
 class Client:
 
-    def __init__(self, host, port):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((host, port))
-
-        self.chat_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.chat_server.bind((host, 0))
-        self.chat_server.listen(4)
-        
-        self.chat_server_port = self.chat_server.getsockname()[1]
-
-        print(self.chat_server_port)
+    def __init__(self, sock, chat_server, host, username):
+        self = self
+        self.sock = sock
+        self.chat_server = chat_server
 
         gui = tkinter.Tk()
         gui.withdraw()
 
-        self.nickname = simpledialog.askstring("Nickname", "Please choose a nickname", parent=gui)
+        self.nickname = username
 
         self.gui_done = False
         self.running = True
@@ -44,6 +43,7 @@ class Client:
 
     def gui_loop(self):
         self.win = tkinter.Tk()
+        self.win.geometry('300x100')  
         self.win.configure(bg="lightgray")
 
 
@@ -53,6 +53,8 @@ class Client:
 
         self.list_user = tkinter.Frame(self.win)
         self.list_user.pack(padx=20, pady=5)
+        
+        
 
         self.gui_done = True
 
@@ -130,7 +132,7 @@ class Chat:
     
     def gui_loop(self):
         self.top= tkinter.Toplevel(self.win)
-        self.top.geometry("750x600")
+        self.top.geometry("750x700")
         self.top.title("Child Window")
         self.top.configure(bg="lightgray")
 
@@ -153,14 +155,51 @@ class Chat:
         self.top_send_button.config(font=("Arial", 12))
         self.top_send_button.pack(padx=20, pady=5)
 
+        self.top_label_file_explorer = tkinter.Label(self.top,
+                            text = "File Explorer using Tkinter",
+                            width = 100, height = 1,
+                            fg = "blue")
+        self.top_label_file_explorer.config(font=("Arial", 12))
+        self.top_label_file_explorer.pack(padx=20, pady=5)
+
         self.top_select_file_btn = tkinter.Button(self.top, text="Choose file", command=self.select_file)
+        self.top_select_file_btn.config(font=("Arial", 12))
+        self.top_select_file_btn.pack(padx=20, pady=5)
 
         self.gui_done = True
 
         self.top.protocol("WM_DELETE_WINDOW", self.stop)
 
     def select_file(self):
-        filename = filedialog.askopenfilename(initialdir=os.getcwd(), title="Select file", filetypes=(('file_text','*.txt'),('all files', '*.*')))
+        filepath = filedialog.askopenfilename(
+                                          title = "Select a File",
+                                          filetypes = (("Text files",
+                                                        "*.txt*"),
+                                                       ("all files",
+                                                        "*.*")),
+                                          parent=self.win)
+
+        filename = os.path.basename(str(filepath))
+
+        # Change label contents
+        self.top_label_file_explorer.configure(text="File Opened: "+ filename)
+        file = open(filepath, 'r')
+        data = file.read()
+        print(data)
+
+        self.peer.send("FILE".encode('utf-8'))
+        # recv_file_msg = self.peer.recv(1024).decode('utf-8')
+        # print(recv_file_msg)
+
+        self.peer.send(str(filename).encode('utf-8'))
+
+        time.sleep(1)
+
+        # recv_name_msg = self.peer.recv(1024).decode('utf-8')
+        # print(recv_name_msg)
+        
+        self.peer.send(data.encode('utf-8'))
+
 
     def write_text_area(self, message):
         self.top_text_area.config(state='normal')
@@ -185,9 +224,22 @@ class Chat:
                 print('before receive')
                 message_chat = self.peer.recv(1024).decode('utf-8')
                 print(message_chat)
-                print('after receive')
-                if self.gui_done:
-                    self.write_text_area(message_chat)
+                if message_chat == 'FILE':
+                    # self.peer.send("RECV file".encode('utf-8'))
+                    filename = self.peer.recv(1024).decode('utf-8')
+                    print(filename)
+                    # self.peer.send("RECV filename".encode('utf-8'))
+                    print('error1')
+                    data = self.peer.recv(4048).decode('utf-8')
+                    file=open("files/"+filename, 'w')
+                    print('error2')
+                    print(data)
+                    file.write(data)
+                    file.close()
+                else:
+                    print('after receive')
+                    if self.gui_done:
+                        self.write_text_area(message_chat)
             except ConnectionAbortedError:
                 break
             except:
@@ -195,4 +247,82 @@ class Chat:
                 self.peer.close()
                 break
 
-client = Client(HOST, PORT)
+######################## LOGIN ###############################
+def validateLogin(self, username, password):
+        message = "LOGIN-" + username.get() + "-" + password.get() + "-" + str(self.chat_server_port)
+        self.sock.send(message.encode("utf-8"))
+        return
+
+def validateRegister(self, username, password):
+        message = "REGISTER-" + username.get() + "-" + password.get() + "-" + str(self.chat_server_port)
+        self.sock.send(message.encode("utf-8"))
+        return
+
+class LOGIN:
+
+    def __init__(self, host, port):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.connect((host, port))
+
+        self.chat_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.chat_server.bind((host, 0))
+        self.chat_server.listen(4)
+
+        self.chat_server_port = self.chat_server.getsockname()[1]
+
+        receive_thread = threading.Thread(target=self.receive)
+        receive_thread.start()
+
+        #window
+        self.win = Tk()  
+        self.win.geometry('200x100')  
+        self.win.title('Tkinter Login Form - pythonexamples.org')
+
+        #username label and text entry box
+        usernameLabel = Label(self.win, text="User Name").grid(row=0, column=0)
+        username = StringVar()
+        usernameEntry = Entry(self.win, textvariable=username).grid(row=0, column=1)  
+
+        #password label and password entry box
+        passwordLabel = Label(self.win,text="Password").grid(row=1, column=0)  
+        password = StringVar()
+        passwordEntry = Entry(self.win, textvariable=password, show='*').grid(row=1, column=1)  
+
+        global validateLogin
+        validateLogin = partial(validateLogin, self, username, password)
+        global validateRegister
+        validateRegister = partial(validateRegister, self, username, password)
+
+        #login button
+        loginButton = Button(self.win, text="Login", command=validateLogin).grid(row=4, column=0)  
+
+        #register button
+        registerButton = Button(self.win, text="Register", command=validateRegister).grid(row=4, column=1)
+
+        self.win.protocol("WM_DELETE_WINDOW", self.stop)
+
+        self.win.mainloop()
+
+    def receive(self):
+        while True:
+            message = self.sock.recv(1024).decode("utf-8")
+
+            [response, username] = message.split('-')
+            if response == "SUCCESS":
+                client = Client(self.sock, self.chat_server, HOST, username)
+                self.stop()
+                break
+
+    def stop(self):
+        self.win.destroy()
+        exit(0)
+
+login = LOGIN(HOST, PORT)
+
+
+
+
+
+
+
+
