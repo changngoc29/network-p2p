@@ -5,7 +5,7 @@ import threading
 #Variables
 host = "localhost"
 user = "root"
-password = "trungkien2901"
+password = ""
 
 HOST = '127.0.0.1'
 POST = 9090
