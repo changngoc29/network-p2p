@@ -5,9 +5,9 @@ import threading
 #Variables
 host = "localhost"
 user = "root"
-password = ""
+password = "trungkien2901"
 
-HOST = '127.0.0.1'
+HOST = '26.227.140.19'
 POST = 9090
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

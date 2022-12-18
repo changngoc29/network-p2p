@@ -12,8 +12,8 @@ import time
 
 ######################## CHAT ###############################
 
-HOST = '26.227.140.19'
-PORT = 9090
+HOST = '26.14.27.251'
+PORT = 5000
 
 class Client:
 
@@ -183,10 +183,9 @@ class Chat:
 
         # Change label contents
         self.top_label_file_explorer.configure(text="File Opened: "+ filename)
-        # file = open(filepath, 'r')
-        
-        # data = file.read()
-        # print(data)
+        file = open(filepath, 'r')
+        data = file.read()
+        print(data)
 
         self.peer.send("FILE".encode('utf-8'))
         # recv_file_msg = self.peer.recv(1024).decode('utf-8')
@@ -199,17 +198,7 @@ class Chat:
         # recv_name_msg = self.peer.recv(1024).decode('utf-8')
         # print(recv_name_msg)
         
-        # self.peer.send(data.encode('utf-8'))
-        with open(filepath) as f:
-            while True:
-                data = f.read(1024)
-                if not data: 
-                    print('finished in send file')
-                    break
-                self.peer.send(data.encode('utf-8'))
-            
-        time.sleep(1)
-        self.peer.send('finished'.encode('utf-8'))
+        self.peer.send(data.encode('utf-8'))
 
 
     def write_text_area(self, message):
@@ -241,19 +230,11 @@ class Chat:
                     print(filename)
                     # self.peer.send("RECV filename".encode('utf-8'))
                     print('error1')
-                    # data = self.peer.recv(4048).decode('utf-8')
+                    data = self.peer.recv(4048).decode('utf-8')
                     file=open("files/"+filename, 'w')
                     print('error2')
-                
-                    l = self.peer.recv(1024).decode('utf-8')
-                    while l:
-                        file.write(l)
-                        l = self.peer.recv(1024).decode('utf-8')
-                        if l == 'finished':
-                            print('finish recv process')
-                            break
-                    print("finished receive file")
-                    # file.write(data)
+                    print(data)
+                    file.write(data)
                     file.close()
                 else:
                     print('after receive')
@@ -284,7 +265,7 @@ class LOGIN:
         self.sock.connect((host, port))
 
         self.chat_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.chat_server.bind((host, 0))
+        self.chat_server.bind(('26.227.140.19', 0))
         self.chat_server.listen(4)
 
         self.chat_server_port = self.chat_server.getsockname()[1]
